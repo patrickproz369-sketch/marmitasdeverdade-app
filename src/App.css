@@ -39,6 +39,17 @@ body {
   padding-bottom: 80px;
 }
 
+/* TOP BANNER DE AVISO */
+.top-banner-aviso {
+  background: linear-gradient(90deg, #1e3a8a, #065f46);
+  color: #fff;
+  text-align: center;
+  padding: 8px 16px;
+  font-size: 13px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* HEADER */
 .app-header {
   background-color: rgba(15, 23, 42, 0.95);
   backdrop-filter: blur(12px);
@@ -101,31 +112,40 @@ body {
   gap: 8px;
   font-size: 14px;
   box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
-  transition: transform 0.15s ease, background-color 0.15s ease;
+  transition: transform 0.15s ease;
 }
 
 .cart-btn-header:hover {
-  background-color: var(--primary-hover);
   transform: translateY(-1px);
 }
 
 .cart-badge {
-  background-color: #042f2e;
-  color: var(--primary);
-  border-radius: 50%;
-  padding: 2px 7px;
-  font-size: 12px;
+  border-radius: 12px;
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: 800;
 }
 
+.badge-alert {
+  background-color: #991b1b;
+  color: #fecaca;
+}
+
+.badge-ok {
+  background-color: #064e3b;
+  color: #a7f3d0;
+}
+
+/* HERO */
 .hero-banner {
   background: radial-gradient(circle at top right, rgba(16, 185, 129, 0.15), transparent 50%), var(--bg-surface);
   border-bottom: 1px solid var(--border-color);
-  padding: 50px 20px;
+  padding: 45px 20px;
   text-align: center;
 }
 
 .hero-content {
-  max-width: 750px;
+  max-width: 780px;
   margin: 0 auto;
 }
 
@@ -133,7 +153,7 @@ body {
   display: inline-block;
   background-color: rgba(16, 185, 129, 0.1);
   color: var(--primary);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: bold;
   padding: 6px 14px;
   border-radius: 20px;
@@ -145,7 +165,7 @@ body {
   font-size: 32px;
   font-weight: 900;
   color: #fff;
-  line-height: 1.2;
+  line-height: 1.25;
   margin: 0 0 16px;
 }
 
@@ -167,31 +187,25 @@ body {
   background-color: var(--primary);
   color: var(--primary-dark);
   border: none;
-  padding: 14px 24px;
+  padding: 13px 22px;
   border-radius: 10px;
   font-weight: bold;
-  font-size: 15px;
+  font-size: 14px;
   cursor: pointer;
   box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3);
-  transition: transform 0.15s ease;
-}
-
-.btn-primary:hover {
-  transform: translateY(-2px);
 }
 
 .btn-secondary {
   background-color: var(--bg-elevated);
   color: #fff;
   text-decoration: none;
-  padding: 14px 20px;
+  padding: 13px 20px;
   border-radius: 10px;
   font-weight: bold;
   font-size: 14px;
-  display: inline-flex;
-  align-items: center;
 }
 
+/* FILTROS */
 .categories-nav {
   max-width: 1200px;
   margin: 25px auto 10px;
@@ -211,7 +225,6 @@ body {
   white-space: nowrap;
   background-color: var(--bg-elevated);
   color: #cbd5e1;
-  transition: all 0.2s ease;
 }
 
 .category-btn.active {
@@ -220,6 +233,7 @@ body {
   border-color: var(--primary);
 }
 
+/* GRID E CARDS */
 .main-content {
   max-width: 1200px;
   margin: 10px auto 40px;
@@ -228,7 +242,7 @@ body {
 
 .dishes-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
   gap: 24px;
 }
 
@@ -260,17 +274,31 @@ body {
 .badge-vermelho { background-color: #ef4444; }
 .badge-verde { background-color: #10b981; }
 .badge-roxo { background-color: #8b5cf6; }
-.badge-ciano { background-color: #14b8a6; }
+.badge-ciano { background-color: #0284c7; }
 
 .card-media {
   position: relative;
-  height: 190px;
+  height: 205px;
 }
 
 .card-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.badge-pote-volume {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background-color: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
+  color: #e2e8f0;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .btn-nutri-badge {
@@ -300,6 +328,7 @@ body {
   font-size: 16px;
   margin: 0 0 8px;
   font-weight: 700;
+  line-height: 1.35;
 }
 
 .card-desc {
@@ -346,7 +375,7 @@ body {
 }
 
 .price-val {
-  font-size: 18px;
+  font-size: 19px;
   font-weight: 900;
   color: var(--primary);
 }
@@ -371,13 +400,64 @@ body {
   background-color: var(--primary);
   color: var(--primary-dark);
   border: none;
-  padding: 8px 12px;
+  padding: 8px 14px;
   border-radius: var(--radius-sm);
   font-size: 12px;
   font-weight: bold;
   cursor: pointer;
 }
 
+/* PROGRESS BAR DO CARRINHO (15 UNIDADES) */
+.cart-progress-box {
+  background-color: #0b1120;
+  border-bottom: 1px solid #1f2937;
+  padding: 14px 20px;
+}
+
+.progress-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #cbd5e1;
+  margin-bottom: 6px;
+}
+
+.progress-track {
+  width: 100%;
+  height: 8px;
+  background-color: #1e293b;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #f59e0b, #10b981);
+  transition: width 0.3s ease;
+}
+
+.progress-fill.fill-completed {
+  background: #10b981;
+}
+
+.aviso-minimo-pendente {
+  font-size: 12px;
+  color: #fca5a5;
+  background-color: rgba(239, 68, 68, 0.15);
+  padding: 6px 10px;
+  border-radius: 6px;
+}
+
+.aviso-minimo-ok {
+  font-size: 12px;
+  color: #a7f3d0;
+  background-color: rgba(16, 185, 129, 0.15);
+  padding: 6px 10px;
+  border-radius: 6px;
+}
+
+/* MODAIS */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -647,6 +727,7 @@ body {
   cursor: pointer;
 }
 
+/* NUTRI MODAL */
 .nutri-hero-box {
   background-color: #0b1120;
   border: 1px solid var(--border-color);
@@ -695,6 +776,7 @@ body {
   color: var(--text-muted);
 }
 
+/* OFFCANVAS CARRINHO */
 .cart-backdrop {
   position: fixed;
   inset: 0;
@@ -706,7 +788,7 @@ body {
 
 .cart-drawer {
   width: 100%;
-  max-width: 400px;
+  max-width: 420px;
   background-color: var(--bg-surface);
   height: 100%;
   box-shadow: -8px 0 24px rgba(0, 0, 0, 0.5);
@@ -720,6 +802,17 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.cart-drawer-header h3 {
+  margin: 0;
+  color: #fff;
+  font-size: 16px;
+}
+
+.cart-subhead {
+  font-size: 11px;
+  color: var(--text-muted);
 }
 
 .cart-body {
@@ -776,7 +869,7 @@ body {
 }
 
 .text-danger { color: var(--danger-text); }
-.text-success { color: var(--primary); margin-top: 4px; }
+.text-success { color: var(--primary); }
 
 .cart-item-footer {
   display: flex;
@@ -814,8 +907,18 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 14px;
-  font-size: 16px;
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: #cbd5e1;
+}
+
+.total-destaque {
+  font-size: 18px;
+  font-weight: bold;
+  color: #fff;
+  border-top: 1px solid #1f2937;
+  padding-top: 8px;
+  margin-top: 8px;
 }
 
 .btn-proceed-checkout {
@@ -825,11 +928,21 @@ body {
   border: none;
   padding: 14px;
   border-radius: 10px;
-  font-size: 15px;
-  fontWeight: bold;
+  font-size: 14px;
+  font-weight: bold;
   cursor: pointer;
+  margin-top: 10px;
+  transition: opacity 0.2s ease;
 }
 
+.btn-proceed-checkout.disabled {
+  background-color: #334155;
+  color: #94a3b8;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* CHECKOUT FORM */
 .checkout-form {
   display: flex;
   flex-direction: column;
@@ -898,6 +1011,7 @@ body {
   margin-top: 6px;
 }
 
+/* MOBILE BAR */
 .mobile-sticky-bar {
   position: fixed;
   bottom: 0;
@@ -937,8 +1051,5 @@ body {
 @media (max-width: 640px) {
   .hero-title {
     font-size: 26px;
-  }
-  .cart-price-header {
-    display: none;
   }
 }

@@ -1,143 +1,152 @@
 import React, { useState, useMemo } from 'react';
 import './App.css';
 
-// 1. BANCO DE DADOS & DADOS NUTRICIONAIS REAIS (TACO/USDA)
+// CONSTANTE DA REGRA DE NEGÓCIO - RMBH
+const PEDIDO_MINIMO_MARMITAS = 15;
+const PERCENTUAL_DESCONTO_KIT = 0.05; // 5% de desconto automático para kits de 15+ marmitas
+const SEU_WHATSAPP = "5531995516104";
+
+// ADICIONAIS CONGELADOS
 const BASE_ADICIONAIS = [
-  { id: 'ovo', nome: 'Ovo Caipira Cozido (1 un)', preco: 3.50, desc: 'Albumina e colina pura', nutri: { cal: 74, prot: 6.3, carb: 0.6, gord: 5.0, fibra: 0 } },
-  { id: 'frango_extra', nome: 'Porção Extra de Frango (100g)', preco: 8.50, desc: 'Peito grelhado em cubos', nutri: { cal: 159, prot: 32.0, carb: 0.0, gord: 3.2, fibra: 0 } },
-  { id: 'carne_extra', nome: 'Porção Extra de Patinho (100g)', preco: 10.90, desc: 'Carne magra refogada', nutri: { cal: 172, prot: 29.5, carb: 0.0, gord: 5.8, fibra: 0 } },
-  { id: 'bacon_crispy', nome: 'Bacon Artesanal Crocante (30g)', preco: 5.90, desc: 'Defumação natural em lenha', nutri: { cal: 135, prot: 9.2, carb: 0.4, gord: 11.0, fibra: 0 } },
-  { id: 'queijo_minas', nome: 'Queijo Minas Frescal Selado (50g)', preco: 5.50, desc: 'Leve e rico em cálcio', nutri: { cal: 120, prot: 8.5, carb: 1.6, gord: 9.0, fibra: 0 } },
-  { id: 'legumes_extra', nome: 'Mix de Legumes no Vapor (120g)', preco: 4.90, desc: 'Brócolis, cenoura e vagem', nutri: { cal: 52, prot: 2.4, carb: 9.2, gord: 0.4, fibra: 4.1 } },
-  { id: 'arroz_extra', nome: 'Porção Extra Arroz Integral (100g)', preco: 4.00, desc: 'Arroz agulhinha integral', nutri: { cal: 124, prot: 2.6, carb: 25.8, gord: 1.0, fibra: 2.7 } },
-  { id: 'feijao_extra', nome: 'Feijão Carioca Cremoso (100g)', preco: 4.50, desc: 'Tempero caseiro suave', nutri: { cal: 91, prot: 5.5, carb: 16.2, gord: 0.5, fibra: 6.4 } }
+  { id: 'ovo', nome: 'Ovo Caipira Cozido Extra', preco: 3.00, desc: 'Embalado a vácuo para congelamento', nutri: { cal: 74, prot: 6.3, carb: 0.6, gord: 5.0, fibra: 0 } },
+  { id: 'frango_extra', nome: 'Porção Extra Frango Desfiado (100g)', preco: 7.50, desc: 'Peito refogado e suculento', nutri: { cal: 159, prot: 32.0, carb: 0.0, gord: 3.2, fibra: 0 } },
+  { id: 'carne_extra', nome: 'Porção Extra Carne Moída (100g)', preco: 8.90, desc: 'Patinho magro refogado', nutri: { cal: 172, prot: 29.5, carb: 0.0, gord: 5.8, fibra: 0 } },
+  { id: 'bacon_crispy', nome: 'Torresminho / Bacon Crocante (30g)', preco: 4.90, desc: 'Ideal para feijoada ou tropeiro', nutri: { cal: 135, prot: 9.2, carb: 0.4, gord: 11.0, fibra: 0 } },
+  { id: 'queijo_minas', nome: 'Queijo Minas Curado Gratinado (50g)', preco: 5.00, desc: 'Queijo canastra/minas autêntico', nutri: { cal: 125, prot: 8.5, carb: 1.6, gord: 9.0, fibra: 0 } },
+  { id: 'legumes_extra', nome: 'Mix de Legumes Congelados (120g)', preco: 4.50, desc: 'Cenoura, abobrinha e vagem no vapor', nutri: { cal: 52, prot: 2.4, carb: 9.2, gord: 0.4, fibra: 4.1 } },
+  { id: 'feijao_tropeiro', nome: 'Porção Feijão Tropeiro Mineiro (120g)', preco: 6.00, desc: 'Feijão, farinha biju e couve', nutri: { cal: 195, prot: 9.5, carb: 22.0, gord: 7.8, fibra: 5.5 } }
 ];
 
+// OPÇÕES PARA QUEM QUER MONTAR O SEU POTE CONGELADO DO ZERO
 const OPCOES_MONTAGEM = {
   tamanhos: [
-    { id: 'P', nome: 'Tamanho P (320g)', peso: '320g', preco: 19.90, fatorNutri: 0.8 },
-    { id: 'M', nome: 'Tamanho M (450g) - Mais Vendido', peso: '450g', preco: 24.90, fatorNutri: 1.0 },
-    { id: 'G', nome: 'Tamanho G (600g) - Hipertrofia', peso: '600g', preco: 30.90, fatorNutri: 1.35 }
+    { id: 'PADRAO', nome: 'Pote Tradicional 400g', peso: '400g', preco: 18.90, fatorNutri: 1.0 },
+    { id: 'REFORCADO', nome: 'Pote Reforçado 500g (Mais Pedido)', peso: '500g', preco: 21.90, fatorNutri: 1.25 },
+    { id: 'MEGA', nome: 'Pote Família / Hipertrofia 650g', peso: '650g', preco: 26.90, fatorNutri: 1.55 }
   ],
   proteinas: [
-    { id: 'frango', nome: 'Peito de Frango em Cubos Grelhado', precoExtra: 0, nutri: { cal: 160, prot: 32, carb: 0, gord: 3.2, fibra: 0 } },
-    { id: 'patinho', nome: 'Patinho Moído Magro Refogado', precoExtra: 2.50, nutri: { cal: 175, prot: 30, carb: 0, gord: 6.0, fibra: 0 } },
-    { id: 'tilapia', nome: 'Filé de Tilápia com Crosta de Ervas', precoExtra: 4.00, nutri: { cal: 140, prot: 28, carb: 0, gord: 2.8, fibra: 0 } },
-    { id: 'grao_bico', nome: 'Mix Vegano de Cogumelos & Grão de Bico', precoExtra: 2.00, nutri: { cal: 180, prot: 12, carb: 26, gord: 4.0, fibra: 7.5 } }
+    { id: 'carne_panela', nome: 'Carne de Panela Desfiada no Molho', precoExtra: 2.00, nutri: { cal: 210, prot: 32, carb: 2, gord: 8.5, fibra: 0 } },
+    { id: 'frango_grelhado', nome: 'Peito de Frango Grelhado em Tiras', precoExtra: 0, nutri: { cal: 160, prot: 32, carb: 0, gord: 3.2, fibra: 0 } },
+    { id: 'patinho_moido', nome: 'Patinho Moído Magro Refogado', precoExtra: 1.50, nutri: { cal: 175, prot: 30, carb: 0, gord: 6.0, fibra: 0 } },
+    { id: 'carne_seca', nome: 'Carne Seca Desfiada e Dessalgada', precoExtra: 3.00, nutri: { cal: 220, prot: 31, carb: 1, gord: 10.0, fibra: 0 } }
   ],
   bases: [
-    { id: 'arroz_int', nome: 'Arroz Integral Cateto com Cenoura', precoExtra: 0, nutri: { cal: 130, prot: 2.7, carb: 27, gord: 1.0, fibra: 2.8 } },
-    { id: 'pure_batata_doce', nome: 'Purê Aveludado de Batata Doce', precoExtra: 0, nutri: { cal: 115, prot: 1.6, carb: 26, gord: 0.5, fibra: 3.0 } },
-    { id: 'mandioca', nome: 'Mandioca Cozida no Vapor com Salsa', precoExtra: 1.00, nutri: { cal: 145, prot: 1.2, carb: 35, gord: 0.3, fibra: 2.0 } },
-    { id: 'quinoa', nome: 'Quinoa Real em Grãos com Alho-Poró', precoExtra: 3.50, nutri: { cal: 140, prot: 5.0, carb: 24, gord: 2.2, fibra: 3.5 } }
+    { id: 'arroz_feijao', nome: 'Arroz Branco Soltinho + Feijão Carioca', precoExtra: 0, nutri: { cal: 190, prot: 6.0, carb: 38, gord: 1.2, fibra: 5.0 } },
+    { id: 'arroz_integral', nome: 'Arroz Integral c/ Cenoura + Feijão', precoExtra: 0, nutri: { cal: 175, prot: 5.8, carb: 35, gord: 1.0, fibra: 6.2 } },
+    { id: 'pure_batata', nome: 'Purê Caseiro de Batata com Manteiga', precoExtra: 1.00, nutri: { cal: 155, prot: 2.5, carb: 28, gord: 3.8, fibra: 2.2 } },
+    { id: 'pure_mandioca', nome: 'Purê Rústico de Mandioca Mineira', precoExtra: 1.50, nutri: { cal: 165, prot: 1.8, carb: 34, gord: 2.1, fibra: 3.0 } }
   ],
   legumes: [
-    { id: 'brocolis', nome: 'Brócolis ao Alho Dourado', precoExtra: 0, nutri: { cal: 35, prot: 2.8, carb: 5.0, gord: 0.4, fibra: 3.0 } },
-    { id: 'abobrinha', nome: 'Abobrinha Italiana Grelhada', precoExtra: 0, nutri: { cal: 25, prot: 1.5, carb: 3.8, gord: 0.3, fibra: 1.8 } },
-    { id: 'cenoura_vagem', nome: 'Mix de Cenoura e Vagem no Azeite', precoExtra: 0, nutri: { cal: 40, prot: 1.8, carb: 7.2, gord: 0.6, fibra: 2.9 } },
-    { id: 'aspargos', nome: 'Aspargos Verdes Selados', precoExtra: 4.00, nutri: { cal: 30, prot: 2.5, carb: 4.0, gord: 0.2, fibra: 2.2 } }
+    { id: 'couve_mineira', nome: 'Couve Fininha Refogada no Alho', precoExtra: 0, nutri: { cal: 45, prot: 2.9, carb: 6.0, gord: 1.2, fibra: 3.8 } },
+    { id: 'cenoura_abobrinha', nome: 'Mix Cenoura e Abobrinha no Azeite', precoExtra: 0, nutri: { cal: 35, prot: 1.5, carb: 5.2, gord: 0.8, fibra: 2.5 } },
+    { id: 'brocolis_alho', nome: 'Brócolis ao Alho Dourado', precoExtra: 1.00, nutri: { cal: 38, prot: 3.0, carb: 5.5, gord: 0.5, fibra: 3.2 } }
   ],
   ingredientesRetiraveis: [
-    'Sem Alho', 'Sem Cebola', 'Sem Sal Extra / Hipossódico', 'Sem Azeite no Acabamento'
+    'Sem Alho', 'Sem Cebola', 'Pouco Sal', 'Sem Tempero Verde'
   ]
 };
 
+// 3. CARDÁPIO CLÁSSICO DE CONGELADAS (RMBH)
 const MARMITAS_PRONTAS = [
   {
     id: 1,
-    nome: "Marmita Fit - Frango com Batata Doce",
+    nome: "Carne de Panela com Arroz, Feijão e Legumes",
     categoria: "Mais Vendida",
     badgeClasse: "badge-laranja",
-    descricao: "Peito de frango grelhado em cubos, purê aveludado de batata doce e brócolis ao alho.",
+    pesoEmbalagem: "Pote Selado 500g",
+    descricao: "Carne bovina macia desmanchando ao molho de tomate caseiro, arroz branco soltinho, feijão carioquinha cremoso e cenoura com abobrinha refogadas.",
     preco: 21.90,
-    imagem: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80",
+    imagem: "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=650&q=80",
     composicaoPadrao: {
-      proteina: "Frango Grelhado (140g)",
-      base: "Purê de Batata Doce (150g)",
-      legumes: ["Brócolis ao Alho (90g)"]
+      proteina: "Carne de Panela no Molho (160g)",
+      base: "Arroz Branco + Feijão Carioca (240g)",
+      legumes: ["Legumes no Vapor (100g)"]
     },
-    nutri: { cal: 385, prot: 41, carb: 36, gord: 4.8, fibra: 6.2 }
+    nutri: { cal: 485, prot: 39, carb: 52, gord: 12.5, fibra: 7.2 }
   },
   {
     id: 2,
-    nome: "Patinho Moído Nobre com Arroz Integral",
-    categoria: "Hipertrofia",
-    badgeClasse: "badge-vermelho",
-    descricao: "Carne moída magra refogada, arroz integral cateto e mix de legumes frescos salteados.",
-    preco: 24.50,
-    imagem: "https://images.unsplash.com/photo-1543339308-43e59d6b73a6?auto=format&fit=crop&w=600&q=80",
+    nome: "Strogonoff de Frango com Arroz e Batatas Assadas",
+    categoria: "Clássica",
+    badgeClasse: "badge-roxo",
+    pesoEmbalagem: "Pote Selado 450g",
+    descricao: "Cubos de filé de frango ao molho strogonoff tradicional bem encorpado, acompanha arroz branco soltinho e batatinhas douradas ao forno.",
+    preco: 19.90,
+    imagem: "https://images.unsplash.com/photo-1604908177453-7462950a6a3b?auto=format&fit=crop&w=650&q=80",
     composicaoPadrao: {
-      proteina: "Patinho Moído Magro (150g)",
-      base: "Arroz Integral c/ Cenoura (140g)",
-      legumes: ["Mix de Legumes (100g)"]
+      proteina: "Strogonoff de Frango Caseiro (160g)",
+      base: "Arroz Branco (190g)",
+      legumes: ["Batatas Douradas no Forno (100g)"]
     },
-    nutri: { cal: 440, prot: 43, carb: 39, gord: 8.5, fibra: 6.8 }
+    nutri: { cal: 460, prot: 41, carb: 48, gord: 10.8, fibra: 3.5 }
   },
   {
     id: 3,
-    nome: "Tilápia com Crosta de Ervas & Legumes",
-    categoria: "Low Carb",
-    badgeClasse: "badge-verde",
-    descricao: "Filé de tilápia fresca, crosta crocante de ervas finas, abobrinha e cenoura na chapa.",
-    preco: 26.90,
-    imagem: "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?auto=format&fit=crop&w=600&q=80",
+    nome: "Lasanha à Bolonhesa Caseira (Gratinada no Pote)",
+    categoria: "Especial",
+    badgeClasse: "badge-vermelho",
+    pesoEmbalagem: "Pote Forno/Micro 500g",
+    descricao: "Massa artesanal intercalada com molho à bolonhesa rico em carne bovina, molho bechamel cremoso e cobertura generosa de queijo gratinado.",
+    preco: 22.90,
+    imagem: "https://images.unsplash.com/photo-1574894709920-11b28e7367e3?auto=format&fit=crop&w=650&q=80",
     composicaoPadrao: {
-      proteina: "Tilápia em Crosta (160g)",
-      base: "Mix Low Carb de Vegetais (150g)",
-      legumes: ["Abobrinha e Vagem (90g)"]
+      proteina: "Molho Bolonhesa Especial (180g)",
+      base: "Massa de Lasanha e Bechamel (220g)",
+      legumes: ["Queijo Gratinado (100g)"]
     },
-    nutri: { cal: 310, prot: 37, carb: 11, gord: 5.4, fibra: 5.1 }
+    nutri: { cal: 560, prot: 36, carb: 54, gord: 21.0, fibra: 3.8 }
   },
   {
     id: 4,
-    nome: "Strogonoff Fit de Frango Cremoso",
-    categoria: "Equilíbrio",
-    badgeClasse: "badge-roxo",
-    descricao: "Cubos de frango macios, molho suave à base de iogurte natural, arroz integral e batatas assadas.",
-    preco: 23.90,
-    imagem: "https://images.unsplash.com/photo-1547496502-affa22d38842?auto=format&fit=crop&w=600&q=80",
+    nome: "Feijoada Completa Tradicional com Couve e Farofa",
+    categoria: "Tradicional",
+    badgeClasse: "badge-laranja",
+    pesoEmbalagem: "Pote Selado 500g",
+    descricao: "Feijão preto bem apurado com carnes nobres (carne seca, lombo e calabresa defumada), arroz branco, couve refogada e farofinha crocante.",
+    preco: 22.50,
+    imagem: "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?auto=format&fit=crop&w=650&q=80",
     composicaoPadrao: {
-      proteina: "Strogonoff Light (150g)",
-      base: "Arroz Integral (120g)",
-      legumes: ["Batatas Rústicas Assadas (80g)"]
+      proteina: "Feijoada com Carnes Nobres (220g)",
+      base: "Arroz Branco + Farofa (200g)",
+      legumes: ["Couve Mineira Refogada (80g)"]
     },
-    nutri: { cal: 415, prot: 38, carb: 42, gord: 7.9, fibra: 4.5 }
+    nutri: { cal: 590, prot: 44, carb: 58, gord: 18.5, fibra: 9.8 }
   },
   {
     id: 5,
-    nome: "Escondidinho de Mandioca com Carne Seca",
-    categoria: "Especial",
-    badgeClasse: "badge-laranja",
-    descricao: "Mandioca cremosa sem lactose, carne seca premium desfiada e queijo minas gratinado.",
-    preco: 27.00,
-    imagem: "https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=600&q=80",
+    nome: "Filé de Frango Grelhado com Purê e Arroz Integral",
+    categoria: "Linha Fit",
+    badgeClasse: "badge-verde",
+    pesoEmbalagem: "Pote Fit 400g",
+    descricao: "Filé de peito de frango marinado em ervas frescas, purê aveludado de batatas, arroz integral com cenoura ralada e brócolis ao alho.",
+    preco: 17.90,
+    imagem: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=650&q=80",
     composicaoPadrao: {
-      proteina: "Carne Seca Dessalgada (140g)",
-      base: "Purê Rústico de Mandioca (160g)",
-      legumes: ["Queijo Minas Gratinado (30g)"]
+      proteina: "Peito de Frango Grelhado (140g)",
+      base: "Purê de Batata + Arroz Integral (180g)",
+      legumes: ["Brócolis ao Alho (80g)"]
     },
-    nutri: { cal: 480, prot: 39, carb: 48, gord: 11.5, fibra: 4.0 }
+    nutri: { cal: 360, prot: 42, carb: 35, gord: 4.8, fibra: 5.5 }
   },
   {
     id: 6,
-    nome: "Bowl Vegano Energético de Grão de Bico",
-    categoria: "Vegano",
+    nome: "Escondidinho de Mandioca com Carne Seca Nobre",
+    categoria: "Mineira",
     badgeClasse: "badge-ciano",
-    descricao: "Grão de bico crocante, cogumelos salteados, quinoa real, tomate cereja confit e cubos de abacate.",
-    preco: 25.50,
-    imagem: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=600&q=80",
+    pesoEmbalagem: "Pote Forno/Micro 450g",
+    descricao: "Purê aveludado de mandioca amarela cozida no vapor, recheado com carne seca desfiada e dessalgada, finalizado com queijo minas curado.",
+    preco: 20.90,
+    imagem: "https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=650&q=80",
     composicaoPadrao: {
-      proteina: "Cogumelos & Grão de Bico (150g)",
-      base: "Quinoa Real (120g)",
-      legumes: ["Abacate & Tomates Confit (90g)"]
+      proteina: "Carne Seca Acebolada (150g)",
+      base: "Purê Cremoso de Mandioca (220g)",
+      legumes: ["Queijo Minas Gratinado (80g)"]
     },
-    nutri: { cal: 390, prot: 18, carb: 49, gord: 12.0, fibra: 11.4 }
+    nutri: { cal: 490, prot: 37, carb: 49, gord: 14.0, fibra: 4.5 }
   }
 ];
 
 export default function App() {
-  const SEU_WHATSAPP = "5531995516104";
-
   const [carrinho, setCarrinho] = useState([]);
   const [observacoesGerais, setObservacoesGerais] = useState("");
   const [filtroCategoria, setFiltroCategoria] = useState("Todas");
@@ -149,6 +158,7 @@ export default function App() {
 
   const [cliente, setCliente] = useState({
     nome: "",
+    cidade: "Belo Horizonte",
     endereco: "",
     bairro: "",
     pagamento: "PIX",
@@ -166,6 +176,7 @@ export default function App() {
     obsItem: ""
   });
 
+  // Cálculo de Preço e Nutrição do montador
   const calculoCustomizacao = useMemo(() => {
     let preco = customizacao.tamanho.preco;
     let nutri = { cal: 0, prot: 0, carb: 0, gord: 0, fibra: 0 };
@@ -225,6 +236,17 @@ export default function App() {
     };
   }, [customizacao]);
 
+  // Totais do Carrinho e Regra de 15 Unidades
+  const totalMarmitas = carrinho.reduce((acc, item) => acc + item.qtd, 0);
+  const subtotalCarrinho = carrinho.reduce((acc, item) => acc + (item.precoUnitario * item.qtd), 0);
+  
+  const atingiuMinimo = totalMarmitas >= PEDIDO_MINIMO_MARMITAS;
+  const marmitasFaltando = Math.max(0, PEDIDO_MINIMO_MARMITAS - totalMarmitas);
+  
+  // Desconto de Kit (5% a partir de 15 unidades)
+  const valorDescontoKit = atingiuMinimo ? (subtotalCarrinho * PERCENTUAL_DESCONTO_KIT) : 0;
+  const totalComDesconto = subtotalCarrinho - valorDescontoKit;
+
   const abrirMontador = (itemOriginal = null) => {
     setCustomizacao({
       itemOriginal: itemOriginal,
@@ -283,7 +305,7 @@ export default function App() {
 
     const novoItem = {
       cartId: Date.now() + Math.random(),
-      nome: customizacao.itemOriginal ? customizacao.itemOriginal.nome : `Marmita Personalizada (${customizacao.tamanho.nome.split(' ')[0]})`,
+      nome: customizacao.itemOriginal ? customizacao.itemOriginal.nome : `Pote Personalizado (${customizacao.tamanho.nome.split(' ')[0]})`,
       tipo: customizacao.itemOriginal ? "Prato Customizado" : "Monte Sua Marmita",
       tamanho: customizacao.tamanho.nome,
       proteina: customizacao.proteina.nome,
@@ -307,7 +329,7 @@ export default function App() {
       cartId: Date.now() + Math.random(),
       nome: marmita.nome,
       tipo: "Prato Pronto",
-      tamanho: "Padrão da Casa (400g)",
+      tamanho: marmita.pesoEmbalagem,
       proteina: marmita.composicaoPadrao.proteina,
       base: marmita.composicaoPadrao.base,
       legumes: marmita.composicaoPadrao.legumes,
@@ -336,32 +358,32 @@ export default function App() {
     setCarrinho(carrinho.filter(i => i.cartId !== cartId));
   };
 
-  const totalCarrinho = carrinho.reduce((acc, item) => acc + (item.precoUnitario * item.qtd), 0);
-  const totalItensCarrinho = carrinho.reduce((acc, item) => acc + item.qtd, 0);
-
+  // FINALIZAR PEDIDO VIA WHATSAPP (RMBH)
   const finalizarPedidoWhatsApp = () => {
-    if (carrinho.length === 0) return alert("Seu carrinho está vazio!");
-    if (!cliente.nome.trim() || !cliente.endereco.trim() || !cliente.bairro.trim()) {
-      return alert("Por favor, preencha nome, endereço e bairro para entrega!");
+    if (!atingiuMinimo) {
+      return alert(`O pedido mínimo para entrega de congelados na RMBH é de ${PEDIDO_MINIMO_MARMITAS} unidades. Faltam ${marmitasFaltando} marmitas.`);
     }
 
-    let msg = `🍱 *NOVO PEDIDO - MARMITAS DE VERDADE*\n`;
+    if (!cliente.nome.trim() || !cliente.endereco.trim() || !cliente.bairro.trim()) {
+      return alert("Por favor, preencha nome, endereço e bairro para calcularmos sua rota de entrega na Grande BH!");
+    }
+
+    let msg = `🍱 *NOVO PEDIDO - MARMITAS CONGELADAS (KIT RMBH)*\n`;
     msg += `━━━━━━━━━━━━━━━━━━━━━━\n`;
     msg += `👤 *Cliente:* ${cliente.nome.trim()}\n`;
-    msg += `📍 *Endereço:* ${cliente.endereco.trim()} - ${cliente.bairro.trim()}\n`;
-    msg += `💳 *Pagamento:* ${cliente.pagamento}`;
+    msg += `📍 *Entrega:* ${cliente.endereco.trim()} - ${cliente.bairro.trim()} (${cliente.cidade})\n`;
+    msg += `💳 *Forma de Pagamento:* ${cliente.pagamento}`;
     if (cliente.pagamento === "Dinheiro" && cliente.trocoPara) {
       msg += ` (Troco para R$ ${cliente.trocoPara})`;
     }
-    msg += `\n━━━━━━━━━━━━━━━━━━━━━━\n\n`;
-    msg += `📋 *ITENS ESCOLHIDOS:*\n\n`;
+    msg += `\n📦 *Total de Marmitas:* ${totalMarmitas} unidades (Mínimo de 15 atingido! ✅)\n`;
+    msg += `━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+    msg += `📋 *ITENS DO SEU KIT:*\n\n`;
 
     carrinho.forEach((item, index) => {
       msg += `*${index + 1}. ${item.qtd}x ${item.nome}*\n`;
-      msg += `   ▫️ *Tamanho:* ${item.tamanho}\n`;
-      msg += `   ▫️ *Proteína:* ${item.proteina}\n`;
-      msg += `   ▫️ *Base:* ${item.base}\n`;
-      msg += `   ▫️ *Legumes:* ${item.legumes.join(', ')}\n`;
+      msg += `   ▫️ *Pote:* ${item.tamanho}\n`;
+      msg += `   ▫️ *Composição:* ${item.proteina} + ${item.base} + ${item.legumes.join(', ')}\n`;
 
       if (item.remocoes && item.remocoes.length > 0) {
         msg += `   ⚠️ *Retirar:* ${item.remocoes.join(', ')}\n`;
@@ -372,9 +394,6 @@ export default function App() {
           msg += `      • ${add.qtd}x ${add.nome} (+R$ ${(add.preco * add.qtd).toFixed(2)})\n`;
         });
       }
-      if (item.nutri) {
-        msg += `   📊 *Nutri/unidade:* ${item.nutri.cal} kcal | P: ${item.nutri.prot}g | C: ${item.nutri.carb}g | G: ${item.nutri.gord}g\n`;
-      }
       msg += `   💵 *Subtotal:* R$ ${(item.precoUnitario * item.qtd).toFixed(2)}\n\n`;
     });
 
@@ -384,8 +403,12 @@ export default function App() {
     }
 
     msg += `━━━━━━━━━━━━━━━━━━━━━━\n`;
-    msg += `💰 *VALOR TOTAL: R$ ${totalCarrinho.toFixed(2)}*\n`;
-    msg += `🛵 _Taxa de entrega a combinar conforme rota._\n`;
+    msg += `🛒 *Subtotal:* R$ ${subtotalCarrinho.toFixed(2)}\n`;
+    if (valorDescontoKit > 0) {
+      msg += `🎉 *Desconto Kit Congelados (5%):* -R$ ${valorDescontoKit.toFixed(2)}\n`;
+    }
+    msg += `💰 *TOTAL A PAGAR: R$ ${totalComDesconto.toFixed(2)}*\n`;
+    msg += `🛵 _Taxa de entrega combinada conforme rota em Belo Horizonte / Contagem / Betim / Nova Lima._\n`;
 
     const url = `https://wa.me/${SEU_WHATSAPP}?text=${encodeURIComponent(msg)}`;
     window.open(url, '_blank');
@@ -397,6 +420,11 @@ export default function App() {
 
   return (
     <div className="app-container">
+      {/* AVISO DO TOPO: REGRA DE 15 MARMITAS */}
+      <div className="top-banner-aviso">
+        <span>❄️ <strong>Kits de Marmitas Congeladas (RMBH):</strong> Pedido mínimo de <strong>15 unidades</strong>. Ganhe 5% de desconto no kit!</span>
+      </div>
+
       {/* CABEÇALHO */}
       <header className="app-header">
         <div className="header-inner">
@@ -406,14 +434,16 @@ export default function App() {
               <div className="brand-title">
                 MARMITAS <span className="brand-highlight">DE VERDADE</span>
               </div>
-              <p className="brand-subtitle">Alimentação Limpa • Ultra Fresca • Performance Diária</p>
+              <p className="brand-subtitle">Comida Caseira Congelada Ultra Fresca • Grande BH</p>
             </div>
           </div>
 
           <button onClick={() => setCarrinhoAberto(true)} className="cart-btn-header">
             <span>🛒</span>
-            <span className="cart-badge">{totalItensCarrinho}</span>
-            <span>R$ {totalCarrinho.toFixed(2)}</span>
+            <span className={`cart-badge ${atingiuMinimo ? 'badge-ok' : 'badge-alert'}`}>
+              {totalMarmitas}/15
+            </span>
+            <span>R$ {totalComDesconto.toFixed(2)}</span>
           </button>
         </div>
       </header>
@@ -421,17 +451,17 @@ export default function App() {
       {/* HERO BANNER */}
       <section className="hero-banner">
         <div className="hero-content">
-          <div className="hero-tag">⚡ NUTRIÇÃO INTELIGENTE & SOB MEDIDA</div>
-          <h2 className="hero-title">Comida de verdade feita para os seus objetivos</h2>
+          <div className="hero-tag">❄️ CONGELAMENTO RÁPIDO EM POTES LIVRES DE BPA</div>
+          <h2 className="hero-title">O sabor da comida caseira mineira no seu freezer</h2>
           <p className="hero-desc">
-            Escolha um prato do nosso cardápio balanceado ou <strong>monte sua marmita grama por grama</strong> com cálculo de macronutrientes em tempo real.
+            Pratos preparados no dia e ultracongelados em embalagens seladas de <strong>400g a 500g</strong>. Prontas para aquecer no micro-ondas em 5 minutos.
           </p>
           <div className="hero-actions">
             <button onClick={() => abrirMontador(null)} className="btn-primary">
-              ✨ Montar Minha Marmita do Zero
+              ✨ Montar Marmita Personalizada
             </button>
             <a href="#cardapio" className="btn-secondary">
-              Ver Pratos Prontos ⬇
+              Ver Cardápio de Congeladas ⬇
             </a>
           </div>
         </div>
@@ -439,7 +469,7 @@ export default function App() {
 
       {/* FILTROS DE CATEGORIA */}
       <nav className="categories-nav" id="cardapio">
-        {["Todas", "Mais Vendida", "Hipertrofia", "Low Carb", "Equilíbrio", "Vegano"].map(cat => (
+        {["Todas", "Mais Vendida", "Clássica", "Tradicional", "Linha Fit", "Mineira"].map(cat => (
           <button
             key={cat}
             onClick={() => setFiltroCategoria(cat)}
@@ -461,6 +491,7 @@ export default function App() {
 
               <div className="card-media">
                 <img src={marmita.imagem} alt={marmita.nome} className="card-img" />
+                <span className="badge-pote-volume">{marmita.pesoEmbalagem}</span>
                 <button
                   onClick={() => setModalNutriItem(marmita)}
                   className="btn-nutri-badge"
@@ -486,7 +517,7 @@ export default function App() {
 
                 <div className="card-bottom">
                   <div className="price-group">
-                    <span className="price-label">A partir de</span>
+                    <span className="price-label">Preço da unidade</span>
                     <div className="price-val">R$ {marmita.preco.toFixed(2)}</div>
                   </div>
 
@@ -495,13 +526,13 @@ export default function App() {
                       onClick={() => abrirMontador(marmita)}
                       className="btn-outline"
                     >
-                      ⚙️ Customizar
+                      ⚙️ Ajustar
                     </button>
                     <button
                       onClick={() => adicionarPratoDireto(marmita)}
                       className="btn-add"
                     >
-                      + Direto
+                      + Pote
                     </button>
                   </div>
                 </div>
@@ -517,9 +548,9 @@ export default function App() {
           <div className="modal-box modal-box-scroll">
             <div className="modal-header">
               <div>
-                <span className="modal-eyebrow">Configurador Avançado</span>
+                <span className="modal-eyebrow">Personalização de Pote Congelado</span>
                 <h2 className="modal-heading">
-                  {customizacao.itemOriginal ? `Customizar: ${customizacao.itemOriginal.nome}` : 'Monte Sua Marmita do Zero'}
+                  {customizacao.itemOriginal ? `Ajustar: ${customizacao.itemOriginal.nome}` : 'Montar Pote Congelado'}
                 </h2>
               </div>
               <button onClick={() => setModalCustomizar(false)} className="btn-close">✕</button>
@@ -549,9 +580,9 @@ export default function App() {
               </div>
             </div>
 
-            {/* 1. Tamanho */}
+            {/* 1. Tamanho da Embalagem */}
             <div className="config-step">
-              <label className="step-title">1. Escolha a Gramatura / Tamanho</label>
+              <label className="step-title">1. Tamanho do Pote (Gramatura Congelada)</label>
               <div className="chips-grid">
                 {OPCOES_MONTAGEM.tamanhos.map(tam => (
                   <button
@@ -568,7 +599,7 @@ export default function App() {
 
             {/* 2. Proteína */}
             <div className="config-step">
-              <label className="step-title">2. Selecione a Proteína</label>
+              <label className="step-title">2. Escolha a Proteína Principal</label>
               <div className="list-options">
                 {OPCOES_MONTAGEM.proteinas.map(prot => (
                   <div
@@ -588,9 +619,9 @@ export default function App() {
               </div>
             </div>
 
-            {/* 3. Base / Carboidrato */}
+            {/* 3. Base / Acompanhamento */}
             <div className="config-step">
-              <label className="step-title">3. Selecione a Base / Carboidrato</label>
+              <label className="step-title">3. Selecione a Base de Carboidrato</label>
               <div className="list-options">
                 {OPCOES_MONTAGEM.bases.map(base => (
                   <div
@@ -612,7 +643,7 @@ export default function App() {
 
             {/* 4. Legumes */}
             <div className="config-step">
-              <label className="step-title">4. Escolha seus Legumes (1 a 3 opções)</label>
+              <label className="step-title">4. Escolha os Legumes / Acompanhamentos</label>
               <div className="chips-grid">
                 {OPCOES_MONTAGEM.legumes.map(leg => {
                   const sel = customizacao.legumes.includes(leg.id);
@@ -623,7 +654,7 @@ export default function App() {
                       className={`chip-card ${sel ? 'active' : ''}`}
                     >
                       <strong>{sel ? '✓ ' : '+ '}{leg.nome}</strong>
-                      <span className="chip-subprice">{leg.nutri.cal} kcal • {leg.nutri.fibra}g fibra</span>
+                      <span className="chip-subprice">{leg.nutri.cal} kcal</span>
                     </div>
                   );
                 })}
@@ -632,7 +663,7 @@ export default function App() {
 
             {/* 5. Adicionais com preços */}
             <div className="config-step">
-              <label className="step-title">5. Adicionais Turbinados (Opcional)</label>
+              <label className="step-title">5. Adicionais no Pote (Opcional)</label>
               <div className="list-options">
                 {BASE_ADICIONAIS.map(add => {
                   const qtd = customizacao.adicionaisQtd[add.id] || 0;
@@ -641,7 +672,7 @@ export default function App() {
                       <div className="addon-info">
                         <strong>{add.nome}</strong>
                         <span className="addon-desc">{add.desc}</span>
-                        <span className="addon-nutri">+{add.nutri.cal} kcal | +{add.nutri.prot}g prot | R$ {add.preco.toFixed(2)} un</span>
+                        <span className="addon-nutri">+R$ {add.preco.toFixed(2)} un</span>
                       </div>
                       <div className="stepper-control">
                         <button
@@ -663,7 +694,7 @@ export default function App() {
 
             {/* 6. Remoções */}
             <div className="config-step">
-              <label className="step-title">6. Restrições e Remoções</label>
+              <label className="step-title">6. Restrições e Temperos</label>
               <div className="removal-tags">
                 {OPCOES_MONTAGEM.ingredientesRetiraveis.map(ing => {
                   const sel = customizacao.remocoes.includes(ing);
@@ -680,14 +711,14 @@ export default function App() {
               </div>
             </div>
 
-            {/* Rodapé do Modal de Customização */}
+            {/* Rodapé do Modal */}
             <div className="modal-footer-sticky">
               <div className="footer-total-group">
-                <span>Total da Marmita</span>
+                <span>Valor Unitário</span>
                 <div className="footer-price">R$ {calculoCustomizacao.precoFinal.toFixed(2)}</div>
               </div>
               <button onClick={salvarNoCarrinho} className="btn-confirm-dish">
-                Adicionar ao Carrinho 🛍️
+                Adicionar ao Kit 🛍️
               </button>
             </div>
           </div>
@@ -700,7 +731,7 @@ export default function App() {
           <div className="modal-box modal-nutri">
             <div className="modal-header">
               <div>
-                <span className="modal-eyebrow">Composição e Ficha Técnica</span>
+                <span className="modal-eyebrow">Informações Nutricionais</span>
                 <h3 className="modal-heading-sub">{modalNutriItem.nome}</h3>
               </div>
               <button onClick={() => setModalNutriItem(null)} className="btn-close">✕</button>
@@ -710,7 +741,7 @@ export default function App() {
               <div>
                 <div className="nutri-hero-box">
                   <div className="nutri-hero-val">{modalNutriItem.nutri.cal}</div>
-                  <div className="nutri-hero-lbl">Calorias Totais (kcal)</div>
+                  <div className="nutri-hero-lbl">Calorias Estimadas (kcal / porção)</div>
                 </div>
 
                 <div className="nutri-table-list">
@@ -719,7 +750,7 @@ export default function App() {
                     <strong>{modalNutriItem.nutri.prot} g</strong>
                   </div>
                   <div className="nutri-table-row">
-                    <span>Carboidratos Líquidos</span>
+                    <span>Carboidratos</span>
                     <strong>{modalNutriItem.nutri.carb} g</strong>
                   </div>
                   <div className="nutri-table-row">
@@ -733,32 +764,59 @@ export default function App() {
                 </div>
 
                 <p className="nutri-legal">
-                  *Valores aproximados com base nas tabelas TACO e referências de preparo sem gordura hidrogenada.
+                  *Valores calculados com base na Tabela TACO para refeições caseiras congeladas sem conservantes químicos.
                 </p>
               </div>
             ) : (
               <div className="nutri-empty">
-                <p>Informação nutricional não cadastrada para este item.</p>
+                <p>Informação nutricional não cadastrada para este prato.</p>
               </div>
             )}
           </div>
         </div>
       )}
 
-      {/* DRAWER DO CARRINHO */}
+      {/* OFFCANVAS / DRAWER DO CARRINHO */}
       {carrinhoAberto && (
         <div className="cart-backdrop" onClick={() => setCarrinhoAberto(false)}>
           <div className="cart-drawer" onClick={(e) => e.stopPropagation()}>
             <div className="cart-drawer-header">
-              <h3>🛒 Meu Pedido ({totalItensCarrinho})</h3>
+              <div>
+                <h3>🛒 Seu Kit ({totalMarmitas} marmitas)</h3>
+                <span className="cart-subhead">Pedido Mínimo: 15 unidades</span>
+              </div>
               <button onClick={() => setCarrinhoAberto(false)} className="btn-close">✕</button>
+            </div>
+
+            {/* STATUS DO PEDIDO MÍNIMO COM PROGRESS BAR */}
+            <div className="cart-progress-box">
+              <div className="progress-labels">
+                <span>Progresso do Pedido Mínimo:</span>
+                <strong>{totalMarmitas} / 15 marmitas</strong>
+              </div>
+              <div className="progress-track">
+                <div 
+                  className={`progress-fill ${atingiuMinimo ? 'fill-completed' : ''}`}
+                  style={{ width: `${Math.min(100, (totalMarmitas / PEDIDO_MINIMO_MARMITAS) * 100)}%` }}
+                />
+              </div>
+
+              {!atingiuMinimo ? (
+                <div className="aviso-minimo-pendente">
+                  ⚠️ <strong>Faltam {marmitasFaltando} {marmitasFaltando === 1 ? 'marmita' : 'marmitas'}</strong> para atingir o pedido mínimo de entrega!
+                </div>
+              ) : (
+                <div className="aviso-minimo-ok">
+                  🎉 <strong>Parabéns!</strong> Pedido mínimo atingido! 5% de desconto de kit liberado!
+                </div>
+              )}
             </div>
 
             <div className="cart-body">
               {carrinho.length === 0 ? (
                 <div className="empty-cart">
-                  <div className="empty-cart-icon">🥗</div>
-                  <p>Seu carrinho está vazio.</p>
+                  <div className="empty-cart-icon">❄️</div>
+                  <p>Seu kit de congeladas está vazio.</p>
                   <button onClick={() => { setCarrinhoAberto(false); abrirMontador(); }} className="btn-primary">
                     Montar Marmita Agora
                   </button>
@@ -809,12 +867,28 @@ export default function App() {
             {carrinho.length > 0 && (
               <div className="cart-footer-box">
                 <div className="cart-total-row">
-                  <span>Subtotal</span>
-                  <strong>R$ {totalCarrinho.toFixed(2)}</strong>
+                  <span>Subtotal:</span>
+                  <span>R$ {subtotalCarrinho.toFixed(2)}</span>
                 </div>
 
-                <button onClick={() => { setCarrinhoAberto(false); setModalCheckout(true); }} className="btn-proceed-checkout">
-                  Prosseguir para Entrega →
+                {atingiuMinimo && (
+                  <div className="cart-total-row text-success">
+                    <span>Desconto de Kit (5%):</span>
+                    <span>- R$ {valorDescontoKit.toFixed(2)}</span>
+                  </div>
+                )}
+
+                <div className="cart-total-row total-destaque">
+                  <span>Total Final:</span>
+                  <strong>R$ {totalComDesconto.toFixed(2)}</strong>
+                </div>
+
+                <button
+                  onClick={() => { setCarrinhoAberto(false); setModalCheckout(true); }}
+                  className={`btn-proceed-checkout ${!atingiuMinimo ? 'disabled' : ''}`}
+                  disabled={!atingiuMinimo}
+                >
+                  {atingiuMinimo ? "Prosseguir para Entrega (Grande BH) →" : `Adicione mais ${marmitasFaltando} marmitas para liberar`}
                 </button>
               </div>
             )}
@@ -822,14 +896,14 @@ export default function App() {
         </div>
       )}
 
-      {/* MODAL: CHECKOUT & ENTREGA */}
+      {/* MODAL: CHECKOUT & ENTREGA RMBH */}
       {modalCheckout && (
         <div className="modal-overlay">
           <div className="modal-box modal-box-scroll">
             <div className="modal-header">
               <div>
-                <span className="modal-eyebrow">Quase Pronto</span>
-                <h2 className="modal-heading">Dados de Entrega</h2>
+                <span className="modal-eyebrow">Finalização de Pedido</span>
+                <h2 className="modal-heading">Dados de Entrega (RMBH)</h2>
               </div>
               <button onClick={() => setModalCheckout(false)} className="btn-close">✕</button>
             </div>
@@ -839,7 +913,7 @@ export default function App() {
                 <label className="form-label">Seu Nome Completo *</label>
                 <input
                   type="text"
-                  placeholder="Ex: Carlos Eduardo"
+                  placeholder="Ex: Ana Paula Ferreira"
                   className="form-input"
                   value={cliente.nome}
                   onChange={(e) => setCliente({ ...cliente, nome: e.target.value })}
@@ -847,10 +921,28 @@ export default function App() {
               </div>
 
               <div className="form-field">
+                <label className="form-label">Município da Região Metropolitana *</label>
+                <select
+                  className="form-input"
+                  value={cliente.cidade}
+                  onChange={(e) => setCliente({ ...cliente, cidade: e.target.value })}
+                >
+                  <option value="Belo Horizonte">Belo Horizonte</option>
+                  <option value="Contagem">Contagem</option>
+                  <option value="Betim">Betim</option>
+                  <option value="Nova Lima">Nova Lima</option>
+                  <option value="Santa Luzia">Santa Luzia</option>
+                  <option value="Ibirité">Ibirité</option>
+                  <option value="Sabará">Sabará</option>
+                  <option value="Outra Cidade RMBH">Outra Cidade (RMBH)</option>
+                </select>
+              </div>
+
+              <div className="form-field">
                 <label className="form-label">Endereço Completo (Rua, Número e Apto) *</label>
                 <input
                   type="text"
-                  placeholder="Ex: Av. Afonso Pena, 1500 - Apt 402"
+                  placeholder="Ex: Rua Alagoas, 1020 - Apt 501"
                   className="form-input"
                   value={cliente.endereco}
                   onChange={(e) => setCliente({ ...cliente, endereco: e.target.value })}
@@ -858,10 +950,10 @@ export default function App() {
               </div>
 
               <div className="form-field">
-                <label className="form-label">Bairro / Região *</label>
+                <label className="form-label">Bairro *</label>
                 <input
                   type="text"
-                  placeholder="Ex: Savassi ou Funcionários"
+                  placeholder="Ex: Funcionários, Eldorado, etc."
                   className="form-input"
                   value={cliente.bairro}
                   onChange={(e) => setCliente({ ...cliente, bairro: e.target.value })}
@@ -869,13 +961,13 @@ export default function App() {
               </div>
 
               <div className="form-field">
-                <label className="form-label">Forma de Pagamento Preferida *</label>
+                <label className="form-label">Forma de Pagamento *</label>
                 <select
                   className="form-input"
                   value={cliente.pagamento}
                   onChange={(e) => setCliente({ ...cliente, pagamento: e.target.value })}
                 >
-                  <option value="PIX">⚡ Chave PIX (Aprovação Imediata)</option>
+                  <option value="PIX">⚡ Chave PIX (Aprovação e Agendamento Imediato)</option>
                   <option value="Cartão de Crédito">💳 Cartão de Crédito (Maquininha na entrega)</option>
                   <option value="Cartão de Débito">💳 Cartão de Débito (Maquininha)</option>
                   <option value="Dinheiro">💵 Dinheiro em Espécie</option>
@@ -887,7 +979,7 @@ export default function App() {
                   <label className="form-label">Precisa de troco para quanto?</label>
                   <input
                     type="text"
-                    placeholder="Ex: 50,00 ou 100,00"
+                    placeholder="Ex: 300,00 ou 350,00"
                     className="form-input"
                     value={cliente.trocoPara}
                     onChange={(e) => setCliente({ ...cliente, trocoPara: e.target.value })}
@@ -896,9 +988,9 @@ export default function App() {
               )}
 
               <div className="form-field">
-                <label className="form-label">Observações para o Entregador ou Cozinha</label>
+                <label className="form-label">Observações sobre a Entrega ou Freezer</label>
                 <textarea
-                  placeholder="Ex: Deixar na portaria, campainha estragada, talher descartável..."
+                  placeholder="Ex: Entregar após as 18h, deixar com a portaria, etc."
                   className="form-textarea"
                   value={observacoesGerais}
                   onChange={(e) => setObservacoesGerais(e.target.value)}
@@ -906,12 +998,19 @@ export default function App() {
               </div>
 
               <div className="checkout-summary-box">
-                <span>Valor Final das Marmitas:</span>
-                <span className="summary-val">R$ {totalCarrinho.toFixed(2)}</span>
+                <div>
+                  <span>Total do Kit ({totalMarmitas} marmitas):</span>
+                  {valorDescontoKit > 0 && (
+                    <small style={{ display: 'block', color: '#10b981' }}>
+                      Economia de R$ {valorDescontoKit.toFixed(2)} aplicada!
+                    </small>
+                  )}
+                </div>
+                <span className="summary-val">R$ {totalComDesconto.toFixed(2)}</span>
               </div>
 
               <button onClick={finalizarPedidoWhatsApp} className="btn-whatsapp-finish">
-                💬 Enviar Pedido Pronto no WhatsApp
+                💬 Enviar Pedido no WhatsApp da Cozinha
               </button>
             </div>
           </div>
@@ -922,11 +1021,13 @@ export default function App() {
       {carrinho.length > 0 && !carrinhoAberto && (
         <aside aria-label="Resumo do pedido" className="mobile-sticky-bar">
           <div>
-            <div className="mobile-bar-label">Total ({totalItensCarrinho} itens)</div>
-            <div className="mobile-bar-total">R$ {totalCarrinho.toFixed(2)}</div>
+            <div className="mobile-bar-label">
+              Kit: {totalMarmitas}/15 marmitas {!atingiuMinimo && `(Faltam ${marmitasFaltando})`}
+            </div>
+            <div className="mobile-bar-total">R$ {totalComDesconto.toFixed(2)}</div>
           </div>
           <button onClick={() => setCarrinhoAberto(true)} className="mobile-bar-btn">
-            Ver Carrinho 🛒
+            Ver Kit 🛒
           </button>
         </aside>
       )}
